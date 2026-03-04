@@ -119,11 +119,11 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
-STATIC_ROOT = BASE_DIR / "frontend/static"
+STATIC_ROOT = BASE_DIR / "static"
 
-# STATICFILES_DIRS = [
-#     BASE_DIR / "frontend/static/frontend",
-# ]
+STATICFILES_DIRS = [
+    BASE_DIR / "frontend/static",
+]
 
 # Vite integration
 DJANGO_VITE = {
