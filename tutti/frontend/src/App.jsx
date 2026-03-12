@@ -4,6 +4,7 @@ import api from "./services/api";
 import Navbar from "./components/Navbar";
 import LoginPage from "./pages/LoginPage";
 import SignUpPage from "./pages/SignUpPage";
+import ActivityFeed from "./pages/ActivityFeed";
 
 // Placeholder for pages you'll build later
 function PlaceholderPage({ title, description }) {
@@ -92,7 +93,7 @@ function App() {
           <>
             {currentPage === "login" && <LoginPage onNavigate={setCurrentPage} onLogin={handleLogin} />}
             {currentPage === "signup" && <SignUpPage onNavigate={setCurrentPage} onLogin={handleLogin} />}
-            {currentPage === "home" && <PlaceholderPage title="Your Feed" description="Listening activity and friends' updates will appear here." />}
+            {currentPage === "home" && <ActivityFeed onNavigate={setCurrentPage} />}
             {currentPage === "discover" && <PlaceholderPage title="Discover Music" description="Music recommendations based on your profile." />}
             {currentPage === "network" && <PlaceholderPage title="Your Network" description="Find users with similar tastes and nearby listeners." />}
             {currentPage === "profile" && <PlaceholderPage title="Your Profile" description="Listening stats, visualizations, and account settings." />}

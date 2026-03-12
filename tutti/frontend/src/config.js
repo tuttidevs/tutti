@@ -3,11 +3,11 @@
 
 const CONFIG = {
   // Django backend URL (change this to actually work when you make the db L)
-  API_BASE: "http://localhost:8000/api",
+  API_BASE: "http://127.0.0.1:8000/api",
 
   // Google OAuth 
   GOOGLE_CLIENT_ID: "495959917454-8oe59cehmvfbk69udbuj4v88n8p61rb1.apps.googleusercontent.com",
-  GOOGLE_REDIRECT_URI: "http://localhost:3000/auth/google/callback",
+  GOOGLE_REDIRECT_URI: "http://127.0.0.1:3000/auth/google/callback",
   GOOGLE_SCOPES: "openid email profile",
 
   

@@ -6,7 +6,7 @@ import useGeolocation from "../hooks/useGeolocation";
 import FormInput from "../components/FormInput";
 import PrimaryButton from "../components/PrimaryButton";
 import SongSearch from "../components/SongSearch";
-import { GoogleOAuthButton, AuthDivider } from "../components/GoogleOAuth";
+// import { GoogleOAuthButton, AuthDivider } from "../components/GoogleOAuth";
 import { UserIcon, EyeIcon, EyeOffIcon, MapPinIcon, CheckIcon } from "../components/Icons";
 
 function SignUpPage({ onNavigate, onLogin }) {
@@ -130,8 +130,8 @@ function SignUpPage({ onNavigate, onLogin }) {
             Join the federated music community
           </p>
 
-          <GoogleOAuthButton />
-          <AuthDivider />
+          {/*<GoogleOAuthButton />
+          <AuthDivider />*/}
 
           <FormInput label="Username" value={username} onChange={setUsername} placeholder="pick_a_username" error={errors.username} icon={UserIcon} />
           <FormInput label="Display Name (optional)" value={displayName} onChange={setDisplayName} placeholder="How others see you" />

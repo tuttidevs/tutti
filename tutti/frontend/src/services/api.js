@@ -38,7 +38,7 @@ const api = {
     const refreshToken = localStorage.getItem("tutti_refresh_token");
     if (!refreshToken) return false;
     try {
-      const response = await fetch(`${CONFIG.API_BASE}/auth/refresh/`, {
+      const response = await fetch(`${CONFIG.API_BASE}/auth/refresh`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ refresh: refreshToken }),
@@ -54,7 +54,7 @@ const api = {
 
   // standard auth not gogle
   async register(userData) {
-    const data = await api.request("/auth/register/", {
+    const data = await api.request("/auth/register", {
       method: "POST",
       body: JSON.stringify(userData),
     });
@@ -64,7 +64,7 @@ const api = {
   },
 
   async login(credentials) {
-    const data = await api.request("/auth/login/", {
+    const data = await api.request("/auth/login", {
       method: "POST",
       body: JSON.stringify(credentials),
     });
@@ -75,7 +75,7 @@ const api = {
 
   async logout() {
     try {
-      await api.request("/auth/logout/", {
+      await api.request("/auth/logout", {
         method: "POST",
         body: JSON.stringify({
           refresh: localStorage.getItem("tutti_refresh_token"),
@@ -89,7 +89,7 @@ const api = {
 
 
   // Sends the authorization code from Google's redirect to Django then Django exchanges it for user info using the Client Secret.
-  async googleAuth(code) {
+  /* async googleAuth(code) {
     const data = await api.request("/auth/google/", {
       method: "POST",
       body: JSON.stringify({ code, redirect_uri: CONFIG.GOOGLE_REDIRECT_URI }),
@@ -97,22 +97,22 @@ const api = {
     localStorage.setItem("tutti_access_token", data.access);
     localStorage.setItem("tutti_refresh_token", data.refresh);
     return data;
-  },
+  }, */
 
   // user profile
   async getProfile() {
-    return api.request("/auth/me/");
+    return api.request("/auth/me");
   },
 
   async updateLocation(lat, lng, city, country) {
-    return api.request("/auth/me/", {
+    return api.request("/auth/me", {
       method: "PUT",
       body: JSON.stringify({ latitude: lat, longitude: lng, city, country }),
     });
   },
 
   async saveMusicProfile(songIds) {
-    return api.request("/auth/me/music-profile/", {
+    return api.request("/auth/me/music-profile", {
       method: "POST",
       body: JSON.stringify({ recording_ids: songIds }),
     });

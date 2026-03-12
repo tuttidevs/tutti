@@ -5,6 +5,8 @@ import random
 # Create your models here.
 class User(models.Model):
     username = models.CharField(max_length=32, unique=True, null=False)
+    display_name = models.CharField(max_length=64, unique=True, null=True)
+    email = models.CharField(max_length=64, unique=True, null=False)
     password = models.CharField(max_length=32, null=False)
     date_joined = models.DateTimeField(auto_now_add=True)
 

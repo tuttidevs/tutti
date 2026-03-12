@@ -3,7 +3,7 @@ import THEME from "../theme";
 import api from "../services/api";
 import FormInput from "../components/FormInput";
 import PrimaryButton from "../components/PrimaryButton";
-import { GoogleOAuthButton, AuthDivider } from "../components/GoogleOAuth";
+// import { GoogleOAuthButton, AuthDivider } from "../components/GoogleOAuth";
 import { UserIcon, EyeIcon, EyeOffIcon } from "../components/Icons";
 
 //username and password elements
@@ -61,8 +61,8 @@ function LoginPage({ onNavigate, onLogin }) {
         </div>
       )}
 
-      <GoogleOAuthButton />
-      <AuthDivider />
+      {/*<GoogleOAuthButton />
+      <AuthDivider />*/}
 
       <FormInput label="Username" value={username} onChange={setUsername}
         placeholder="your_username" icon={UserIcon} />
