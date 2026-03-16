@@ -131,3 +131,6 @@ DJANGO_VITE = {
         "dev_mode": True
     }
 }
+
+# Custom user class
+AUTH_USER_MODEL = "api.TuttiUser"

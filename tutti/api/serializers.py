@@ -1,12 +1,12 @@
 from rest_framework import serializers
-from .models import User
+from .models import TuttiUser
 
-class UserSerializer(serializers.ModelSerializer):
+class TuttiUserSerializer(serializers.ModelSerializer):
     class Meta:
-        model = User
+        model = TuttiUser
         fields = ('id', 'username', 'display_name', 'email', 'password', 'date_joined')
 
-class CreateUserSerializer(serializers.ModelSerializer):
+class CreateTuttiUserSerializer(serializers.ModelSerializer):
     class Meta:
-        model = User
+        model = TuttiUser
         fields = ('username', 'display_name', 'email', 'password')
