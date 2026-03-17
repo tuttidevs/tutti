@@ -5,16 +5,36 @@ import CONFIG from "../config";
 
 const api = {
   // database request wrapper ---
+  async getCsrfToken() {
+    const response = await fetch(`${CONFIG.API_BASE}/csrf`, {
+      credentials: 'include',
+    });
+    const data = await response.json();
+    return data.csrfToken;
+  },
+
   async request(endpoint, options = {}) {
-    const token = localStorage.getItem("tutti_access_token");
+    // const token = localStorage.getItem("tutti_access_token");
 
     const response = await fetch(`${CONFIG.API_BASE}${endpoint}`, {
       ...options,
-      headers: {
+      /*headers: {
         "Content-Type": "application/json",
-        ...(token && { Authorization: `Bearer ${token}` }),
+        // ...(token && { Authorization: `Bearer ${token}` }),
         ...options.headers,
-      },
+      },*/
+      headers: (
+        options.method === "POST"
+          ? {
+              "X-CSRFToken": await this.getCsrfToken(),
+              "Content-Type": "application/json",
+              ...options.headers,
+            }
+          : {
+              "Content-Type": "application/json",
+              ...options.headers,
+          }
+      ),
     });
 
     // refresing tokens

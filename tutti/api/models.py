@@ -1,5 +1,5 @@
 from django.db import models
-from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
+from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, UserManager
 import string
 import random
 
@@ -17,6 +17,7 @@ class TuttiUser(AbstractBaseUser, PermissionsMixin):
     REQUIRED_FIELDS = ["password"]
     USERNAME_FIELD = "username"
     EMAIL_FIELD = "email"
+    objects = UserManager()
 
 # inbox = XREF
 # outbox = XREF

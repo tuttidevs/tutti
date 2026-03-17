@@ -28,13 +28,13 @@ function App() {
   const [oauthError, setOauthError] = useState("");
 
   // Check for existing session
-  useEffect(() => {
+  /*useEffect(() => {
     const token = localStorage.getItem("tutti_access_token");
     if (token) setIsLoggedIn(true);
-  }, []);
+  }, []);*/
 
   // Handle Google OAuth callback
-  useEffect(() => {
+  /*useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const code = urlParams.get("code");
     const state = urlParams.get("state");
@@ -61,7 +61,7 @@ function App() {
         })
         .finally(() => setOauthLoading(false));
     }
-  }, []);
+  }, []);*/
 
   const handleLogin = () => setIsLoggedIn(true);
 
