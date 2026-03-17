@@ -131,3 +131,15 @@ DJANGO_VITE = {
         "dev_mode": True
     }
 }
+
+# Custom user class
+AUTH_USER_MODEL = "api.TuttiUser"
+
+# Use Argon2 by default
+PASSWORD_HASHERS = [
+    "django.contrib.auth.hashers.Argon2PasswordHasher",
+    "django.contrib.auth.hashers.PBKDF2PasswordHasher",
+    "django.contrib.auth.hashers.PBKDF2SHA1PasswordHasher",
+    "django.contrib.auth.hashers.BCryptSHA256PasswordHasher",
+    "django.contrib.auth.hashers.ScryptPasswordHasher",
+]

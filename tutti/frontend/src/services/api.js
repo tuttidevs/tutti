@@ -5,16 +5,36 @@ import CONFIG from "../config";
 
 const api = {
   // database request wrapper ---
+  async getCsrfToken() {
+    const response = await fetch(`${CONFIG.API_BASE}/csrf/`, {
+      credentials: 'include',
+    });
+    const data = await response.json();
+    return data.csrfToken;
+  },
+
   async request(endpoint, options = {}) {
-    const token = localStorage.getItem("tutti_access_token");
+    // const token = localStorage.getItem("tutti_access_token");
 
     const response = await fetch(`${CONFIG.API_BASE}${endpoint}`, {
       ...options,
-      headers: {
+      /*headers: {
         "Content-Type": "application/json",
-        ...(token && { Authorization: `Bearer ${token}` }),
+        // ...(token && { Authorization: `Bearer ${token}` }),
         ...options.headers,
-      },
+      },*/
+      headers: (
+        options.method === "POST"
+          ? {
+              "X-CSRFToken": await this.getCsrfToken(),
+              "Content-Type": "application/json",
+              ...options.headers,
+            }
+          : {
+              "Content-Type": "application/json",
+              ...options.headers,
+          }
+      ),
     });
 
     // refresing tokens
@@ -34,7 +54,7 @@ const api = {
     return response.json();
   },
 
-  async refreshToken() {
+  /*async refreshToken() {
     const refreshToken = localStorage.getItem("tutti_refresh_token");
     if (!refreshToken) return false;
     try {
@@ -50,40 +70,40 @@ const api = {
       }
     } catch {}
     return false;
-  },
+  },*/
 
   // standard auth not gogle
   async register(userData) {
-    const data = await api.request("/auth/register", {
+    const data = await api.request("/auth/register/", {
       method: "POST",
       body: JSON.stringify(userData),
     });
-    localStorage.setItem("tutti_access_token", data.access);
-    localStorage.setItem("tutti_refresh_token", data.refresh);
+    // localStorage.setItem("tutti_access_token", data.access);
+    // localStorage.setItem("tutti_refresh_token", data.refresh);
     return data;
   },
 
   async login(credentials) {
-    const data = await api.request("/auth/login", {
+    const data = await api.request("/auth/login/", {
       method: "POST",
       body: JSON.stringify(credentials),
     });
-    localStorage.setItem("tutti_access_token", data.access);
-    localStorage.setItem("tutti_refresh_token", data.refresh);
+    // localStorage.setItem("tutti_access_token", data.access);
+    // localStorage.setItem("tutti_refresh_token", data.refresh);
     return data;
   },
 
   async logout() {
     try {
-      await api.request("/auth/logout", {
-        method: "POST",
-        body: JSON.stringify({
-          refresh: localStorage.getItem("tutti_refresh_token"),
-        }),
+      await api.request("/auth/logout/", {
+        // method: "POST",
+        // body: JSON.stringify({
+        //   refresh: localStorage.getItem("tutti_refresh_token"),
+        // }),
       });
     } finally {
-      localStorage.removeItem("tutti_access_token");
-      localStorage.removeItem("tutti_refresh_token");
+      // localStorage.removeItem("tutti_access_token");
+      // localStorage.removeItem("tutti_refresh_token");
     }
   },
 
