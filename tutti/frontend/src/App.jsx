@@ -37,6 +37,7 @@ function App() {
         }
         const result = await response.json();
         setIsLoggedIn(result.isAuthenticated);
+        setCurrentPage("home");
       } catch(err) {
         setIsLoggedIn(false);
       }
