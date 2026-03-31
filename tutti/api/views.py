@@ -93,6 +93,7 @@ class TuttiUserProfileView(APIView):
         for tag in tags:
             tags[tag] = (tags[tag] * 100) / sum_scores
         profile = [(tag, score) for tag, score in tags.items()]
+        profile.sort(reverse=True, key=lambda x: x[1])
         return Response({"profile": profile})
 
 class CreateScrobbleView(CreateAPIView):
