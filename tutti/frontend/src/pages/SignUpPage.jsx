@@ -54,7 +54,6 @@ function SignUpPage({ onNavigate, onLogin, isLoggedIn }) {
       }
       setLoading(false);
     }
-    setStep(3);
     try {
       await api.login({ username, password });
       onLogin();
@@ -62,9 +61,10 @@ function SignUpPage({ onNavigate, onLogin, isLoggedIn }) {
     } catch (err) {
       setErrors({ general: err.message });
     }
+    // setStep(3);
   };
 
-  const handleSaveMusicProfile = async () => {
+  /* const handleSaveMusicProfile = async () => {
     setLoading(true);
     try {
       await api.saveMusicProfile(selectedSongs.map((s) => s.mbid));
@@ -74,12 +74,12 @@ function SignUpPage({ onNavigate, onLogin, isLoggedIn }) {
       setErrors({ general: err.message });
     }
     setLoading(false);
-  };
+  }; */
 
   // Step progress dots for signing up i.e 1 - 2 -3
   const StepIndicator = () => (
     <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginBottom: 32 }}>
-      {[1, 2, 3].map((s) => (
+      {[1, 2/*, 3*/].map((s) => (
         <div key={s} style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <div style={{
             width: 32, height: 32, borderRadius: "50%",
@@ -92,7 +92,7 @@ function SignUpPage({ onNavigate, onLogin, isLoggedIn }) {
           }}>
             {s < step ? <CheckIcon /> : s}
           </div>
-          {s < 3 && <div style={{ width: 40, height: 2, background: s < step ? THEME.accent : THEME.border, borderRadius: 1 }} />}
+          {s < 2 && <div style={{ width: 40, height: 2, background: s < step ? THEME.accent : THEME.border, borderRadius: 1 }} />}
         </div>
       ))}
     </div>
@@ -177,13 +177,15 @@ function SignUpPage({ onNavigate, onLogin, isLoggedIn }) {
           </div>
 
           <div style={{ display: "flex", gap: 12 }}>
-            <PrimaryButton onClick={() => setStep(3)} variant="secondary">Skip</PrimaryButton>
-            <PrimaryButton onClick={handleSaveLocation} loading={loading}>{geo.location ? "Continue" : "Skip for Now"}</PrimaryButton>
+            {/*
+              <PrimaryButton onClick={() => setStep(3)} variant="secondary">Skip</PrimaryButton>
+            */}
+            <PrimaryButton onClick={handleSaveLocation} loading={loading}>{geo.location ? "Set Location" : "Skip for Now"}</PrimaryButton>
           </div>
         </>
       )}
 
-      {step === 3 && (
+      {/*step === 3 && (
         <>
           <h1 style={{ fontFamily: THEME.fontDisplay, fontSize: 28, fontWeight: 700, color: THEME.textPrimary, marginBottom: 8, textAlign: "center" }}>
             Build your profile
@@ -205,7 +207,7 @@ function SignUpPage({ onNavigate, onLogin, isLoggedIn }) {
             </PrimaryButton>
           </div>
         </>
-      )}
+      )*/}
     </div>
   );
 }
