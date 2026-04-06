@@ -1,9 +1,12 @@
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, UserManager
-import string
-import random
 
 # Create your models here.
+class CachedQuery(models.Model):
+    key = models.CharField(max_length=64, unique=True, null=False)
+    data = models.CharField(null=False)
+    time_updated = models.DateTimeField(auto_now_add=True)
+
 class TuttiUser(AbstractBaseUser, PermissionsMixin):
     username = models.CharField(max_length=32, unique=True, null=False)
     display_name = models.CharField(max_length=64, unique=True, null=True)
@@ -25,16 +28,35 @@ class TuttiUser(AbstractBaseUser, PermissionsMixin):
 # followers = XREF
 # liked = XREF
 
-class Scrobble(models.Model):
+class Song(models.Model):
     release_mbid = models.CharField(max_length=36, null=False)
     recording_mbid = models.CharField(max_length=36, null=False)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['release_mbid', 'recording_mbid'], 
+                name='unique_release_recording'
+            )
+        ]
+
+class Scrobble(models.Model):
+    song = models.ForeignKey(Song, on_delete=models.CASCADE)
     tuttiuser = models.ForeignKey(TuttiUser, on_delete=models.CASCADE)
     raw_data = models.CharField(max_length=128, null=False)
     rating = models.IntegerField(null=False, default=1)
     time_created = models.DateTimeField(auto_now_add=True)
     time_updated = models.DateTimeField(auto_now_add=True)
 
-class CachedQuery(models.Model):
-    key = models.CharField(max_length=64, unique=True, null=False)
-    data = models.CharField(null=False)
-    time_updated = models.DateTimeField(auto_now_add=True)
+# TODO: Implement further.
+class Recommendation(models.Model):
+    base_song = models.ForeignKey(Song, on_delete=models.CASCADE, related_name="+")
+    recommended_song = models.ForeignKey(Song, on_delete=models.CASCADE)
+    tuttiuser = models.ForeignKey(TuttiUser, on_delete=models.CASCADE)
+    time_created = models.DateTimeField(auto_now_add=True)
+
+# TODO: Implement further.
+class RecommendationReaction(models.Model):
+    recommendation = models.ForeignKey(Recommendation, on_delete=models.CASCADE)
+    tuttiuser = models.ForeignKey(TuttiUser, on_delete=models.CASCADE)
+

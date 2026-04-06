@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import THEME from "../theme";
 import api from "../services/api";
 
-function Scrobble({ release_mbid, recording_mbid, scrobble_id }) {
+function Scrobble({ song_id }) {
   const [dataLoading, setDataLoading] = useState(true);
   const [coverLoading, setCoverLoading] = useState(true);
   const [dataError, setDataError] = useState(null);
@@ -24,9 +24,9 @@ function Scrobble({ release_mbid, recording_mbid, scrobble_id }) {
   //   }
   // };
 
-  const getScrobbleData = async (recording_mbid, release_mbid, scrobble_id) => {
+  const getScrobbleData = async (song_id) => {
     try {
-      let scrobbleData = await api.getScrobbleData(recording_mbid, release_mbid, scrobble_id);
+      let scrobbleData = await api.getSongData(song_id);
       setData(scrobbleData);
     } catch(err) {
       setDataError(err);
@@ -35,9 +35,9 @@ function Scrobble({ release_mbid, recording_mbid, scrobble_id }) {
     }
   };
 
-  const getScrobbleCover = async (release_mbid) => {
+  const getScrobbleCover = async (song_id) => {
     try {
-      let scrobbleCover = await api.getScrobbleCover(release_mbid);
+      let scrobbleCover = await api.getSongCover(song_id);
       setCover(scrobbleCover.cover);
     } catch(err) {
       setCoverError(err);
@@ -48,8 +48,8 @@ function Scrobble({ release_mbid, recording_mbid, scrobble_id }) {
 
   // Fetch the scrobbles from the REST API
   useEffect(() => {
-    getScrobbleData(recording_mbid, release_mbid, scrobble_id);
-    getScrobbleCover(release_mbid);
+    getScrobbleData(song_id);
+    getScrobbleCover(song_id);
   }, []);
 
   //styling
