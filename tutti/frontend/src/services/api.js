@@ -71,32 +71,20 @@ const api = {
 
   // Sends a request to create a scrobble for the current user with the given data
   async createScrobble(scrobbleData) {
-    return await api.request("/user/createscrobble/", {
+    return await api.request("/createscrobble/", {
       method: "POST",
       body: JSON.stringify(scrobbleData),
     });
   },
 
-  // Sends a request to get a scrobble's data
-  async getScrobbleData(recording_mbid, release_mbid, scrobble_id) {
-    return await api.request("/scrobble/data/", {
-      method: "POST",
-      body: JSON.stringify({
-        "recording_mbid": recording_mbid,
-        "release_mbid": release_mbid,
-        "scrobble_id": scrobble_id,
-      }),
-    });
+  // Sends a request to get a song's data
+  async getSongData(song_id) {
+    return await api.request(`/song/${song_id}/metadata/`);
   },
 
-  // Sends a request to get a scrobble's cover
-  async getScrobbleCover(release_mbid) {
-    return await api.request("/scrobble/cover/", {
-      method: "POST",
-      body: JSON.stringify({
-        "release_mbid": release_mbid,
-      }),
-    });
+  // Sends a request to get a song's cover
+  async getSongCover(song_id) {
+    return await api.request(`/song/${song_id}/cover/`);
   },
 
   // Sends a request to get the current user's profile

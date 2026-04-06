@@ -10,9 +10,9 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.authentication import SessionAuthentication
-from .serializers import TuttiUserSerializer, ScrobbleSerializer
+from .serializers import TuttiUserSerializer, ScrobbleSerializer, RecommendationSerializer
 from .musicbrainz import getMetadata, getCover
-from .models import Scrobble
+from .models import Scrobble, Recommendation, Song
 import json
 import datetime
 import math
@@ -57,7 +57,7 @@ class TuttiUserSessionView(APIView):
     def get(self, request):
         return Response({"isAuthenticated": True})
 
-class TuttiUserScrobbleView(ListAPIView):
+class ListScrobblesView(ListAPIView):
     queryset = Scrobble.objects.all()
     authentication_classes = [SessionAuthentication]
     permission_classes = [IsAuthenticated]
@@ -79,7 +79,7 @@ class TuttiUserProfileView(APIView):
                 age = timezone.now().date() - date
                 rating = scrobble.rating
                 weight = 180 - (3 - rating) if rating > 0 else 0
-                recording = getMetadata("recording", f"rid:\"{scrobble.recording_mbid}\"", 1)
+                recording = getMetadata("recording", f"rid:\"{scrobble.song.recording_mbid}\"", 1)
                 recording_tags = recording["recordings"][0]["tags"]
                 for recording_tag in recording_tags:
                     tag_name = recording_tag["name"]
@@ -104,51 +104,38 @@ class CreateScrobbleView(CreateAPIView):
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
 
-class ScrobbleMetadataView(APIView):
+class SongMetadataView(APIView):
     @method_decorator(cache_page(60 * 15))
-    def post(self, request):
-        release = None
-        recording = None
-        scrobble = Scrobble.objects.get(id=request.data["scrobble_id"])
-        raw_data = json.loads(scrobble.raw_data)
+    def get(self, _request, id):
+        song_query = Song.objects.filter(id=id)
+        if song_query.count() < 1:
+            return Response({"error": "Song does not exist."}, status=404)
+        song = song_query[0]
         try:
-            release = getMetadata("release", f"reid:\"{request.data["release_mbid"]}\"", 1)
+            release = getMetadata("release", f"reid:\"{song.release_mbid}\"", 1)
+            recording = getMetadata("recording", f"rid:\"{song.recording_mbid}\"", 1)
+            return Response({
+                "album": release["releases"][0]["title"],
+                "artist": recording["recordings"][0]["artist-credit"][0]["name"],
+                "title": recording["recordings"][0]["title"],
+            })
         except Exception:
-            release = {
-                "releases": [
-                    {
-                        "title": raw_data["album"],
-                    },
-                ],
-            }
-        try:
-            recording = getMetadata("recording", f"rid:\"{request.data["recording_mbid"]}\"", 1)
-        except Exception:
-            recording = {
-                "recordings": [
-                    {
-                        "title": raw_data["title"],
-                        "artist-credit": [
-                            {
-                                "name": raw_data["artist"],
-                            },
-                        ],
-                    },
-                ],
-            }
-        return Response({
-            "album": release["releases"][0]["title"],
-            "artist": recording["recordings"][0]["artist-credit"][0]["name"],
-            "title": recording["recordings"][0]["title"],
-        })
+            return Response({"error": "Could not fetch song metadata."}, status=503)
 
-class ScrobbleCoverView(APIView):
+class SongCoverView(APIView):
     @method_decorator(cache_page(60 * 15))
-    def post(self, request):
-        cover = getCover(request.data["release_mbid"])
-        return Response({
-            "cover": cover,
-        })
+    def get(self, _, id):
+        song_query = Song.objects.filter(id=id)
+        if song_query.count() < 1:
+            return Response({"error": "Song does not exist."}, status=404)
+        song = song_query[0]
+        try:
+            cover = getCover(song.release_mbid)
+            return Response({
+                "cover": cover,
+            })
+        except Exception:
+            return Response({"error": "Could not fetch song cover."}, status=503)
 
 class ScrobbleLikeView(APIView):
     authentication_classes = [SessionAuthentication]
@@ -181,3 +168,27 @@ class ScrobbleDislikeView(APIView):
         scrobble.save()
         serializer = ScrobbleSerializer(scrobble)
         return Response({"scrobble": serializer.data})
+
+class SongMakeRecommendationView(CreateAPIView):
+    model = Recommendation
+    serializer_class = RecommendationSerializer
+    authentication_classes = [SessionAuthentication]
+    permission_classes = [IsAuthenticated]
+    def perform_create(self, serializer):
+        base_song_query = Song.objects.filter(id=self.kwargs["id"])
+        if base_song_query.count() < 1:
+            return Response({"error": "Base song does not exist."}, status=404)
+        base_song = base_song_query[0]
+        serializer.save(user=self.request.user, base_song=base_song)
+
+class SongRecommendationsView(ListAPIView):
+    queryset = Recommendation.objects.all()
+    serializer_class = RecommendationSerializer
+    def list(self, _, id):
+        song_query = Song.objects.filter(id=id)
+        if song_query.count() < 1:
+            return Response({"error": "Song does not exist."}, status=404)
+        song = song_query[0]
+        queryset = Recommendation.objects.filter(base_song=song)
+        serializer = RecommendationSerializer(queryset, many=True)
+        return Response(serializer.data)

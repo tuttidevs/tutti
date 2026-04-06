@@ -174,7 +174,7 @@ function ActivityFeed({ onNavigate, onLogout, isLoggedIn }) {
             </>)}
             {scrobbles && (<ul style={{"listStyleType": "none"}}>
               {scrobbles.map((scrobble) => (<li key={scrobble.id}>
-                <Scrobble recording_mbid={scrobble.recording_mbid} release_mbid={scrobble.release_mbid} scrobble_id={scrobble.id} />
+                <Scrobble song_id={scrobble.song_id} />
               </li>))}
             </ul>)}
             <button onClick={makeScrobble /* TODO: Pass in data from a form */}>Add a scrobble of Radiohead - "No Surprises" from <i>OK Computer</i> (1997)</button>

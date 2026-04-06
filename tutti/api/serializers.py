@@ -2,11 +2,31 @@ from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
 from .musicbrainz import getMetadata, cacheMetadata
-from .models import Scrobble
+from .models import Scrobble, Song, Recommendation
 import json
 import re
 
 TuttiUser = get_user_model()
+
+def find_or_create_song(album, date, num_tracks, title, artist, track):
+    release_query = f"\"{album}\" AND date:\"{date}\" AND tracks:\"{num_tracks}\""
+    release_mbid = None
+    recording_mbid = None
+    release = getMetadata("release", release_query, 1)
+    release_mbid = release["releases"][0]["id"]
+    recording_query = f"\"{title}\" AND artist:\"{artist}\" AND tnum:\"{track}\" AND reid:\"{release_mbid}\""
+    recording = getMetadata("recording", recording_query, 1)
+    recording_mbid = recording["recordings"][0]["id"]
+    cacheMetadata("release", f"reid:\"{release_mbid}\"", release)
+    cacheMetadata("recording", f"rid:\"{recording_mbid}\"", recording)
+    song_query = Song.objects.filter(
+        release_mbid=release_mbid,
+        recording_mbid=recording_mbid,
+    )
+    return song_query[0] if song_query.count() > 0 else Song.objects.create(
+        release_mbid=release_mbid,
+        recording_mbid=recording_mbid,
+    )
 
 class TuttiUserSerializer(serializers.ModelSerializer):
     display_name = serializers.CharField(allow_blank=True)
@@ -47,29 +67,26 @@ class TuttiUserSerializer(serializers.ModelSerializer):
         model = TuttiUser
         fields = ['id', 'username', 'display_name', 'email', 'password', 'date_joined', 'confirm_password']
 
+class SongSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Song
+        fields = ['release_mbid', 'recording_mbid']
+
 class ScrobbleSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(read_only=True)
+    song_id = serializers.PrimaryKeyRelatedField(read_only=True)
+    tuttiuser = serializers.PrimaryKeyRelatedField(read_only=True)
+    time_created = serializers.DateTimeField(read_only=True)
+    time_updated = serializers.DateTimeField(read_only=True)
+    rating = serializers.IntegerField(read_only=True)
     artist = serializers.CharField(write_only=True)
     album = serializers.CharField(write_only=True)
     title = serializers.CharField(write_only=True)
     date = serializers.CharField(write_only=True)
     track = serializers.IntegerField(write_only=True)
     num_tracks = serializers.IntegerField(write_only=True)
-    release_mbid = serializers.CharField(read_only=True)
-    recording_mbid = serializers.CharField(read_only=True)
-    tuttiuser = serializers.PrimaryKeyRelatedField(read_only=True)
-    raw_data = serializers.CharField(read_only=True)
-    rating = serializers.IntegerField(read_only=True)
     def create(self, validated_data):
-        release_query = f"\"{validated_data["album"]}\" AND date:\"{validated_data["date"]}\" AND tracks:\"{validated_data["num_tracks"]}\""
-        release_mbid = None
-        recording_mbid = None
-        release = getMetadata("release", release_query, 1)
-        release_mbid = release["releases"][0]["id"]
-        recording_query = f"\"{validated_data["title"]}\" AND artist:\"{validated_data["artist"]}\" AND tnum:\"{validated_data["track"]}\" AND reid:\"{release_mbid}\""
-        recording = getMetadata("recording", recording_query, 1)
-        recording_mbid = recording["recordings"][0]["id"]
-        cacheMetadata("release", f"reid:\"{release_mbid}\"", release)
-        cacheMetadata("recording", f"rid:\"{recording_mbid}\"", recording)
+        song = find_or_create_song(validated_data["album"], validated_data["date"], validated_data["num_tracks"], validated_data["title"], validated_data["artist"], validated_data["track"])
         raw_data = {
             "album": validated_data["album"],
             "date": validated_data["date"],
@@ -79,12 +96,35 @@ class ScrobbleSerializer(serializers.ModelSerializer):
             "track": validated_data["track"],
         }
         return Scrobble.objects.create(
-            release_mbid=release_mbid,
-            recording_mbid=recording_mbid,
+            song=song,
             tuttiuser=validated_data["user"],
             raw_data=json.dumps(raw_data)
         )
 
     class Meta:
         model = Scrobble
-        fields = ['id', 'release_mbid', 'recording_mbid', 'tuttiuser', 'raw_data', 'rating', 'time_created', 'time_updated', 'artist', 'album', 'title', 'date', 'track', 'num_tracks']
+        fields = ['id', 'song_id', 'tuttiuser', 'time_created', 'time_updated', 'rating', 'artist', 'album', 'title', 'date', 'track', 'num_tracks']
+
+class RecommendationSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(read_only=True)
+    base_song = serializers.PrimaryKeyRelatedField(read_only=True)
+    recommended_song = serializers.PrimaryKeyRelatedField(read_only=True)
+    tuttiuser = serializers.PrimaryKeyRelatedField(read_only=True)
+    artist = serializers.CharField(write_only=True)
+    album = serializers.CharField(write_only=True)
+    title = serializers.CharField(write_only=True)
+    date = serializers.CharField(write_only=True)
+    track = serializers.IntegerField(write_only=True)
+    num_tracks = serializers.IntegerField(write_only=True)
+    def create(self, validated_data):
+        base_song = validated_data["base_song"]
+        recommended_song = find_or_create_song(validated_data["album"], validated_data["date"], validated_data["num_tracks"], validated_data["title"], validated_data["artist"], validated_data["track"])
+        return Recommendation.objects.create(
+            base_song=base_song,
+            recommended_song=recommended_song,
+            tuttiuser=validated_data["user"],
+        )
+
+    class Meta:
+        model = Recommendation
+        fields = ['id', 'base_song', 'recommended_song', 'tuttiuser', 'time_created', 'artist', 'album', 'title', 'date', 'track', 'num_tracks']
