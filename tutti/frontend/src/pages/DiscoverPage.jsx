@@ -1,0 +1,93 @@
+  import { useState, useEffect } from "react";
+  import THEME from "../theme";
+  import api from "../services/api";
+
+  function DiscoverPage({ isLoggedIn, onNavigate }) {
+    const [profile, setProfile] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    useEffect(() => {
+      if (!isLoggedIn) {
+        onNavigate("login");
+        return;
+      }
+      const fetchProfile = async () => {
+        try {
+          const userProfile = await api.getProfile();
+          setProfile(userProfile);
+        } catch (err) {
+          setError(err.message);
+        } finally {
+          setLoading(false);
+        }
+      };
+      fetchProfile();
+    }, []);
+
+    if (loading) {
+      return (
+        <div style={{ textAlign: "center", padding: "40px" }}>
+          <h1 style={{ fontFamily: THEME.fontDisplay, color: THEME.textPrimary }}>Loading...</h1>
+        </div>
+      );
+    }
+
+    return (
+      <div style={{ maxWidth: 800, margin: "0 auto", padding: "40px 24px" }}>
+        <h1 style={{ fontFamily: THEME.fontDisplay, fontSize: 32, fontWeight: 700, color: THEME.textPrimary, marginBottom: 8 }}>
+          Discover
+        </h1>
+        <p style={{ fontFamily: THEME.fontBody, fontSize: 16, color: THEME.textSecondary, marginBottom: 40, lineHeight: 1.6 }}>
+          Music picked for you based on your listening history.
+        </p>
+
+        {error && (
+          <div style={{ padding: "12px 16px", borderRadius: THEME.radius.md, marginBottom: 32,
+            background: `${THEME.error}15`, border: `1px solid ${THEME.error}40`,
+            color: THEME.error, fontSize: 13, fontFamily: THEME.fontBody }}>
+            {error}
+          </div>
+        )}
+
+        {profile.length > 0 && (
+          <div style={{ marginBottom: 48 }}>
+            <h2 style={{ fontFamily: THEME.fontDisplay, fontSize: 20, fontWeight: 700, color: THEME.textPrimary, marginBottom: 16 }}>
+              Your Taste
+            </h2>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
+              {profile.slice(0, 12).map(([tag, score]) => (
+                <div key={tag} style={{
+                  padding: "8px 16px", borderRadius: THEME.radius.pill,
+                  background: THEME.accentMuted, border: `1px solid ${THEME.accent}40`,
+                  fontFamily: THEME.fontBody, fontSize: 13, fontWeight: 600,
+                  color: THEME.accent,
+                }}>
+                  {tag}
+                  <span style={{ marginLeft: 8, fontSize: 11, color: THEME.textSecondary, fontWeight: 400 }}>
+                    {score.toFixed(1)}%
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div>
+          <h2 style={{ fontFamily: THEME.fontDisplay, fontSize: 20, fontWeight: 700, color: THEME.textPrimary, marginBottom: 16 }}>
+            Recommended for You
+          </h2>
+          <div style={{
+            padding: "48px 40px", borderRadius: THEME.radius.md, background: THEME.bgCard,
+            textAlign: "center", border: `1px dashed ${THEME.border}`,
+          }}>
+            <p style={{ fontFamily: THEME.fontBody, fontSize: 16, color: THEME.textSecondary, lineHeight: 1.6 }}>
+              Song recommendations based on your taste (need to be implemented).
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  export default DiscoverPage;

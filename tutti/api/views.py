@@ -57,6 +57,18 @@ class TuttiUserSessionView(APIView):
     def get(self, request):
         return Response({"isAuthenticated": True})
 
+class TuttiUserMeView(APIView):
+    authentication_classes = [SessionAuthentication]
+    permission_classes = [IsAuthenticated]
+    def get(self, request):
+        user = request.user
+        return Response({
+            "username": user.username,
+            "display_name": user.display_name,
+            "email": user.email,
+            "date_joined": user.date_joined,
+        })
+
 class ListScrobblesView(ListAPIView):
     queryset = Scrobble.objects.all()
     authentication_classes = [SessionAuthentication]
