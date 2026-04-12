@@ -6,20 +6,8 @@ import LoginPage from "./pages/LoginPage";
 import SignUpPage from "./pages/SignUpPage";
 import ActivityFeed from "./pages/ActivityFeed";
 import Profile from "./pages/Profile";
-
-// Placeholder for pages you'll build later
-function PlaceholderPage({ title, description }) {
-  return (
-    <div style={{ maxWidth: 600, margin: "80px auto", textAlign: "center", padding: "0 24px" }}>
-      <h1 style={{ fontFamily: THEME.fontDisplay, fontSize: 32, fontWeight: 700, color: THEME.textPrimary, marginBottom: 12 }}>
-        {title}
-      </h1>
-      <p style={{ fontFamily: THEME.fontBody, fontSize: 16, color: THEME.textSecondary, lineHeight: 1.6 }}>
-        {description}
-      </p>
-    </div>
-  );
-}
+import DiscoverPage from "./pages/DiscoverPage";
+import NetworkPage from "./pages/NetworkPage";
 
 //state of login for page access
 function App() {
@@ -52,8 +40,8 @@ function App() {
         {currentPage === "login" && <LoginPage onNavigate={setCurrentPage} onLogin={handleLogin} isLoggedIn={isLoggedIn} />}
         {currentPage === "signup" && <SignUpPage onNavigate={setCurrentPage} onLogin={handleLogin} isLoggedIn={isLoggedIn} />}
         {currentPage === "home" && <ActivityFeed onNavigate={setCurrentPage} onLogout={handleLogout} isLoggedIn={isLoggedIn} />}
-        {currentPage === "discover" && <PlaceholderPage title="Discover Music" description="Music recommendations based on your profile." />}
-        {currentPage === "network" && <PlaceholderPage title="Your Network" description="Find users with similar tastes and nearby listeners." />}
+        {currentPage === "discover" && <DiscoverPage onNavigate={setCurrentPage} isLoggedIn={isLoggedIn} />}
+        {currentPage === "network" && <NetworkPage onNavigate={setCurrentPage} isLoggedIn={isLoggedIn} />}
         {currentPage === "profile" && <Profile onNavigate={setCurrentPage} onLogout={handleLogout} isLoggedIn={isLoggedIn} />}
       </main>
     </div>

@@ -30,10 +30,19 @@ const api = {
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.detail || `Request failed: ${response.status}`);
+      if (errorData.detail) throw new Error(errorData.detail);
+      if (errorData.non_field_errors) throw new Error(errorData.non_field_errors[0]);
+      const firstFieldError = Object.values(errorData).flat()[0];
+      if (firstFieldError) throw new Error(String(firstFieldError));
+      throw new Error(`Request failed: ${response.status}`);
     }
 
     return response.json();
+  },
+
+  // Returns the current user's account info (username, display_name, email, date_joined)
+  async getMe() {
+    return await api.request("/auth/me/");
   },
 
   // Returns true if user is authenticated
@@ -106,6 +115,20 @@ const api = {
       body: JSON.stringify({ recording_ids: songIds }),
     });
   },
+
+   async likeScrobble(scrobble_id) {
+      return await api.request("/scrobble/like/", {
+        method: "POST",
+        body: JSON.stringify({ scrobble_id }),
+      });
+    },
+
+    async dislikeScrobble(scrobble_id) {
+      return await api.request("/scrobble/dislike/", {
+        method: "POST",
+        body: JSON.stringify({ scrobble_id }),
+      });
+    },
 };
 
 export default api;

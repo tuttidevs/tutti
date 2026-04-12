@@ -5,6 +5,8 @@ import api from "../services/api";
 import useGeolocation from "../hooks/useGeolocation";
 import FormInput from "../components/FormInput";
 import PrimaryButton from "../components/PrimaryButton";
+import { InstagramOAuthButton } from "../components/InstagramOAuth";
+import { SpotifyOAuthButton } from "../components/SpotifyOAuth";
 import SongSearch from "../components/SongSearch";
 // import { GoogleOAuthButton, AuthDivider } from "../components/GoogleOAuth";
 import { UserIcon, EyeIcon, EyeOffIcon, MapPinIcon, CheckIcon } from "../components/Icons";
@@ -175,6 +177,16 @@ function SignUpPage({ onNavigate, onLogin, isLoggedIn }) {
               </div>
             )}
           </div>
+
+          <div style={{ marginBottom: 24, padding: 24, borderRadius: THEME.radius.lg, background: THEME.bgElevated, border: `1px solid ${THEME.border}` }}>
+            <p style={{ fontFamily: THEME.fontBody, fontSize: 14, color: THEME.textSecondary, textAlign: "center", marginBottom: 16 }}>
+              Connect your socials to discover music lovers with similar taste.
+            </p>
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              <InstagramOAuthButton />
+              <SpotifyOAuthButton />
+            </div>
+          </div>          
 
           <div style={{ display: "flex", gap: 12 }}>
             {/*
