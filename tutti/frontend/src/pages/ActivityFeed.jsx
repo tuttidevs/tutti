@@ -2,7 +2,148 @@ import { useState, useEffect } from "react";
 import THEME from "../theme";
 import api from "../services/api";
 import Scrobble from "../components/Scrobble";
+import Recommendation from "../components/Recommendation";
 import GenreForceMap from "../components/GenreForceMap";
+
+const EMPTY_FORM = { artist: "", album: "", title: "", date: "", track: "1", num_tracks: "1" };
+
+function ScrobbleForm({ userId, onAdded }) {
+  const [open, setOpen] = useState(false);
+  const [form, setForm] = useState(EMPTY_FORM);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState(null);
+
+  const set = (field) => (val) => setForm((f) => ({ ...f, [field]: val }));
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setSubmitting(true);
+    setError(null);
+    try {
+      const scrobble = await api.createScrobble(userId, {
+        artist: form.artist,
+        album: form.album.trim() || form.title,
+        title: form.title,
+        date: form.date,
+        track: parseInt(form.track) || 1,
+        num_tracks: parseInt(form.num_tracks) || 1,
+      });
+      onAdded(scrobble);
+      setForm(EMPTY_FORM);
+      setOpen(false);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const fieldStyle = {
+    width: "100%", padding: "10px 12px", borderRadius: THEME.radius.md,
+    border: `1.5px solid ${THEME.border}`, background: THEME.bgElevated,
+    color: THEME.textPrimary, fontSize: 14, fontFamily: THEME.fontBody,
+    outline: "none", boxSizing: "border-box", transition: THEME.transition,
+  };
+
+  return (
+    <div style={{ marginTop: 24 }}>
+      <button
+        onClick={() => setOpen((o) => !o)}
+        style={{
+          padding: "10px 20px", borderRadius: THEME.radius.pill,
+          border: `2px solid ${open ? THEME.accent : THEME.border}`,
+          background: open ? THEME.accentMuted : "transparent",
+          color: open ? THEME.accent : THEME.textSecondary,
+          fontFamily: THEME.fontBody, fontSize: 14, fontWeight: 600,
+          cursor: "pointer", transition: THEME.transition,
+        }}
+      >
+        {open ? "Cancel" : "+ Log a listen"}
+      </button>
+
+      {open && (
+        <form
+          onSubmit={handleSubmit}
+          style={{
+            marginTop: 16, padding: "24px 28px",
+            background: THEME.bgCard, borderRadius: THEME.radius.lg,
+            border: `1px solid ${THEME.border}`,
+          }}
+        >
+          <h3 style={{ margin: "0 0 20px", fontFamily: THEME.fontDisplay, fontSize: 18, fontWeight: 700, color: THEME.textPrimary }}>
+            Log a listen
+          </h3>
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px 16px", marginBottom: 12 }}>
+            {[
+              { field: "artist", label: "Artist", placeholder: "e.g. Radiohead" },
+              { field: "title",  label: "Song title", placeholder: "e.g. No Surprises" },
+              { field: "album",  label: "Album (leave blank for singles)", placeholder: "e.g. OK Computer", required: false },
+              { field: "date",   label: "Release date", placeholder: "YYYY-MM-DD", type: "date" },
+            ].map(({ field, label, placeholder, type = "text", required = true }) => (
+              <div key={field}>
+                <label style={{ display: "block", marginBottom: 5, fontSize: 12, fontWeight: 600, fontFamily: THEME.fontBody, color: THEME.textSecondary }}>
+                  {label}
+                </label>
+                <input
+                  type={type}
+                  required={required}
+                  value={form[field]}
+                  onChange={(e) => set(field)(e.target.value)}
+                  placeholder={placeholder}
+                  style={fieldStyle}
+                  onFocus={(e) => { e.target.style.borderColor = THEME.borderFocus; }}
+                  onBlur={(e) => { e.target.style.borderColor = THEME.border; }}
+                />
+              </div>
+            ))}
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px 16px", marginBottom: 20 }}>
+            {[
+              { field: "track",     label: "Track #", placeholder: "1" },
+              { field: "num_tracks", label: "Total tracks", placeholder: "12" },
+            ].map(({ field, label, placeholder }) => (
+              <div key={field}>
+                <label style={{ display: "block", marginBottom: 5, fontSize: 12, fontWeight: 600, fontFamily: THEME.fontBody, color: THEME.textSecondary }}>
+                  {label}
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  value={form[field]}
+                  onChange={(e) => set(field)(e.target.value)}
+                  placeholder={placeholder}
+                  style={fieldStyle}
+                  onFocus={(e) => { e.target.style.borderColor = THEME.borderFocus; }}
+                  onBlur={(e) => { e.target.style.borderColor = THEME.border; }}
+                />
+              </div>
+            ))}
+          </div>
+
+          {error && (
+            <p style={{ margin: "0 0 14px", fontFamily: THEME.fontBody, fontSize: 13, color: THEME.error }}>{error}</p>
+          )}
+
+          <button
+            type="submit"
+            disabled={submitting}
+            style={{
+              padding: "10px 24px", borderRadius: THEME.radius.pill,
+              border: "none", background: THEME.accent,
+              color: "#fff", fontFamily: THEME.fontBody, fontSize: 14, fontWeight: 700,
+              cursor: submitting ? "default" : "pointer",
+              opacity: submitting ? 0.6 : 1, transition: THEME.transition,
+            }}
+          >
+            {submitting ? "Logging…" : "Log listen"}
+          </button>
+        </form>
+      )}
+    </div>
+  );
+}
 
 function ActivityFeed({ onNavigate, userId }) {
   const [loading, setLoading] = useState(true);
@@ -10,20 +151,23 @@ function ActivityFeed({ onNavigate, userId }) {
   const [scrobbles, setScrobbles] = useState([]);
   const [profile, setProfile] = useState([]);
   const [overlaps, setOverlaps] = useState({});
+  const [recommendations, setRecommendations] = useState([]);
   const isLoggedIn = userId != -1;
 
-  // Fetch user scrobbles and genre profile in parallel
+  // Fetch user scrobbles, genre profile, and recommendations in parallel
   const fetchScrobbles = async () => {
     try {
-      const [userScrobbles, profileData] = await Promise.all([
+      const [userScrobbles, profileData, recs] = await Promise.all([
         api.getScrobbles(userId),
         api.getProfile(userId),
+        api.getRecommendations(userId).catch(() => []),
       ]);
       setScrobbles(userScrobbles);
       // Sort genres descending by score so slice(0, 25) gives top 25
       const sortedProfile = Object.entries(profileData.profile).sort((a, b) => b[1] - a[1]);
       setProfile(sortedProfile);
       setOverlaps(profileData.overlaps);
+      setRecommendations(Array.isArray(recs) ? recs : []);
       setError(null);
     } catch(err) {
       setError(err.message);
@@ -34,7 +178,7 @@ function ActivityFeed({ onNavigate, userId }) {
 
   const refreshProfile = async () => {
     try {
-      const profileData = await api.getProfile();
+      const profileData = await api.getProfile(userId);
       const sortedProfile = Object.entries(profileData.profile).sort((a, b) => b[1] - a[1]);
       setProfile(sortedProfile);
       setOverlaps(profileData.overlaps);
@@ -63,110 +207,14 @@ function ActivityFeed({ onNavigate, userId }) {
   };
 
 
-  const makeScrobble = async (/* scrobbleData */) => {
-    if(!isLoggedIn) {
-      return;
-    }
-    try {
-      // NOTE: These are just songs I like. They're here for testing purposes.
-      const testScrobbles = [
-        {
-          "artist": "Radiohead",
-          "album": "OK Computer",
-          "title": "No Surprises",
-          "date": "1997-05-21",
-          "track": 10,
-          "num_tracks": 12,
-        },
-        {
-          "artist": "Slowdive",
-          "album": "Souvlaki",
-          "title": "Alison",
-          "date": "1993-06-01",
-          "track": 1,
-          "num_tracks": 10,
-        },
-        {
-          "artist": "Cocteau Twins",
-          "album": "Heaven or Las Vegas",
-          "title": "Heaven or Las Vegas",
-          "date": "1990-09-17",
-          "track": 5,
-          "num_tracks": 10,
-        },
-        {
-          "artist": "Pink Floyd",
-          "album": "The Dark Side of the Moon",
-          "title": "Time",
-          "date": "1973-03-01",
-          "track": 4,
-          "num_tracks": 10,
-        },
-        {
-          "artist": "Massive Attack",
-          "album": "Mezzanine",
-          "title": "Teardrop",
-          "date": "1998-04-20",
-          "track": 3,
-          "num_tracks": 11,
-        },
-        {
-          "artist": "Kendrick Lamar",
-          "album": "good kid, m.A.A.d city",
-          "title": "Sing About Me / I'm Dying of Thirst",
-          "date": "2012-10-22",
-          "track": 10,
-          "num_tracks": 12,
-        },
-        {
-          "artist": "The Strokes",
-          "album": "The New Abnormal",
-          "title": "At the Door",
-          "date": "2020-04-10",
-          "track": 6,
-          "num_tracks": 9,
-        },
-        {
-          "artist": "My Bloody Valentine",
-          "album": "loveless",
-          "title": "soon",
-          "date": "1991-11-04",
-          "track": 11,
-          "num_tracks": 11,
-        },
-        {
-          "artist": "Beach House",
-          "album": "Teen Dream",
-          "title": "10 Mile Stereo",
-          "date": "2010-01-26",
-          "track": 8,
-          "num_tracks": 10,
-        },
-        {
-          "artist": "Oasis",
-          "album": "(What's the Story) Morning Glory?",
-          "title": "Champagne Supernova",
-          "date": "1995-10-02",
-          "track": 12,
-          "num_tracks": 12,
-        },
-      ];
-
-      // TODO: Set this based on passed-in args
-      let scrobbleData = testScrobbles[Math.floor(Math.random() * testScrobbles.length)];
-      console.log(scrobbleData)
-      let scrobble = await api.createScrobble(userId, scrobbleData);
-      console.log(scrobble);
-      setScrobbles([...scrobbles, scrobble]);
-      setError(null);
-    } catch(err) {
-      setError(err.message);
-    }
+  const handleScrobbleAdded = (scrobble) => {
+    setScrobbles((prev) => [...prev, scrobble]);
+    refreshProfile();
   };
 
   //styling
   return (
-    <div style={{ /*margin: "80px auto",*/ textAlign: "center", padding: "40px" }}>
+    <div style={{ maxWidth: 960, margin: "0 auto", padding: "40px 24px" }}>
       {!isLoggedIn && (<>
         <h1 style={{ fontFamily: THEME.fontDisplay, fontSize: 32, fontWeight: 700, color: THEME.textPrimary, marginBottom: 12 }}>
           Your Feed
@@ -197,12 +245,28 @@ function ActivityFeed({ onNavigate, userId }) {
                 Listening activity and friends' updates will appear here.
               </p>
             </>)}
-            {scrobbles && (<ul style={{"listStyleType": "none"}}>
+            {scrobbles && (<ul style={{ listStyleType: "none", padding: 0, margin: 0 }}>
               {scrobbles.map((scrobble) => (<li key={scrobble.id}>
                 <Scrobble song_id={scrobble.song_id} scrobble_id={scrobble.id} initialRating={scrobble.rating} onRatingChange={refreshProfile} />
               </li>))}
             </ul>)}
-            <button onClick={makeScrobble /* TODO: Pass in data from a form */}>Add a scrobble of Radiohead - "No Surprises" from <i>OK Computer</i> (1997)</button>
+
+            {recommendations.length > 0 && (
+              <div style={{ marginTop: 40 }}>
+                <h2 style={{ fontFamily: THEME.fontDisplay, fontSize: 22, fontWeight: 700, color: THEME.textPrimary, marginBottom: 16 }}>
+                  Recommended for you
+                </h2>
+                <ul style={{ listStyleType: "none", padding: 0, margin: 0 }}>
+                  {recommendations.slice(0, 10).map((rec) => (
+                    <li key={rec.id}>
+                      <Recommendation base_song={rec.base_song} recommended_song={rec.recommended_song} />
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            <ScrobbleForm userId={userId} onAdded={handleScrobbleAdded} />
           </>)}
         </>)}
       </>)}

@@ -11,6 +11,10 @@ export { Eye as EyeIcon } from "lucide-react";
 export { EyeOff as EyeOffIcon } from "lucide-react";
 export {ThumbsUp as ThumbsUpIcon} from "lucide-react";
 export {ThumbsDown as ThumbsDownIcon} from "lucide-react";
+export {ChevronDown as ChevronDownIcon} from "lucide-react";
+export {UserPlus as UserPlusIcon} from "lucide-react";
+export {UserCheck as UserCheckIcon} from "lucide-react";
+export {Clock as ClockIcon} from "lucide-react";
 
 
 // Google "G" logos

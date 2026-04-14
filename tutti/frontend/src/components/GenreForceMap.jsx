@@ -14,9 +14,9 @@ const GENRE_PALETTE = [
 ];
 
 const TOP_N = 20;
-const CANVAS_HEIGHT = 420;
 
-function GenreForceMap({ profile, overlaps }) {
+function GenreForceMap({ profile, overlaps, title = "Your Genre Map", height = 420 }) {
+  const CANVAS_HEIGHT = height;
   const mountRef = useRef(null);
   const tooltipRef = useRef(null);
   const [tooltip, setTooltip] = useState({ visible: false, x: 0, y: 0, genre: "", pct: 0 });
@@ -296,7 +296,7 @@ function GenreForceMap({ profile, overlaps }) {
         fontFamily: THEME.fontDisplay, fontSize: 20, fontWeight: 700,
         color: THEME.textPrimary, marginBottom: 12, textAlign: "left",
       }}>
-        Your Genre Map
+        {title}
       </h2>
       <div
         ref={mountRef}
@@ -330,7 +330,7 @@ function GenreForceMap({ profile, overlaps }) {
           }}
         >
           <div style={{ fontWeight: 700, marginBottom: 2 }}>{tooltip.genre}</div>
-          <div style={{ color: THEME.textSecondary }}>{tooltip.pct.toFixed(1)}% of your listening</div>
+          <div style={{ color: THEME.textSecondary }}>{tooltip.pct.toFixed(1)}%</div>
         </div>
       )}
     </div>

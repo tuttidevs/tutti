@@ -64,6 +64,12 @@
       }
     };
 
+    const isLocationAlreadySaved =
+      geo.location &&
+      about &&
+      geo.location.city === about.city &&
+      geo.location.country === about.country;
+
     const handleSaveLocation = async () => {
       if (!geo.location) return;
       setLocationLoading(true);
@@ -127,32 +133,51 @@
             padding: 20, borderRadius: THEME.radius.md, background: THEME.bgElevated,
             border: `1px solid ${THEME.border}`, textAlign: "center", marginBottom: 16,
           }}>
-            {locationSaved ? (
+            {geo.loading ? (
+              <>
+                <div style={{ color: THEME.textSecondary, marginBottom: 8 }}><MapPinIcon /></div>
+                <p style={{ fontFamily: THEME.fontBody, fontSize: 14, color: THEME.textSecondary, margin: 0 }}>Detecting location…</p>
+              </>
+            ) : (locationSaved || isLocationAlreadySaved) ? (
               <>
                 <div style={{ color: THEME.success, marginBottom: 8 }}><CheckIcon /></div>
-                <p style={{ fontFamily: THEME.fontBody, fontSize: 14, color: THEME.success, margin: 0 }}>Location saved!</p>
+                <p style={{ fontFamily: THEME.fontBody, fontSize: 15, fontWeight: 600, color: THEME.textPrimary, marginBottom: 4 }}>
+                  {geo.location?.city}, {geo.location?.country}
+                </p>
+                <p style={{ fontSize: 12, color: THEME.success, fontFamily: THEME.fontBody, margin: 0 }}>Location saved</p>
               </>
             ) : geo.location ? (
               <>
-                <div style={{ color: THEME.success, marginBottom: 8 }}><MapPinIcon /></div>
+                <div style={{ color: THEME.accent, marginBottom: 8 }}><MapPinIcon /></div>
                 <p style={{ fontFamily: THEME.fontBody, fontSize: 15, fontWeight: 600, color: THEME.textPrimary, marginBottom: 4 }}>
                   {geo.location.city}, {geo.location.country}
                 </p>
-                <p style={{ fontSize: 12, color: THEME.textSecondary, fontFamily: THEME.fontBody, margin: 0 }}>Location detected</p>
+                <p style={{ fontSize: 12, color: THEME.textSecondary, fontFamily: THEME.fontBody, margin: 0 }}>New location detected</p>
               </>
             ) : (
               <>
                 <div style={{ color: THEME.textSecondary, marginBottom: 12 }}><MapPinIcon /></div>
-                <PrimaryButton onClick={geo.requestLocation} loading={geo.loading} variant="secondary" style={{ width: "auto", display: "inline-block" }}>
+                <PrimaryButton onClick={geo.requestLocation} variant="secondary" style={{ width: "auto", display: "inline-block" }}>
                   Detect Location
                 </PrimaryButton>
-                {geo.error && <p style={{ marginTop: 10, fontSize: 12, color: THEME.warning, fontFamily: THEME.fontBody }}>{geo.error}</p>}
               </>
             )}
+            {geo.error && !geo.loading && (
+              <p style={{ marginTop: 10, fontSize: 12, color: THEME.warning, fontFamily: THEME.fontBody, margin: "10px 0 0" }}>{geo.error}</p>
+            )}
           </div>
-          {geo.location && !locationSaved && (
-            <PrimaryButton onClick={handleSaveLocation} loading={locationLoading}>
+
+          {/* Save button so that only when a new location has been detected that differs from what's stored */}
+          {geo.location && !isLocationAlreadySaved && !locationSaved && !geo.loading && (
+            <PrimaryButton onClick={handleSaveLocation} loading={locationLoading} style={{ marginBottom: 10 }}>
               Save Location
+            </PrimaryButton>
+          )}
+
+          {/* making this always visible when a location is already saved so user can re-detect */}
+          {(locationSaved || isLocationAlreadySaved) && !geo.loading && (
+            <PrimaryButton onClick={geo.requestLocation} variant="secondary">
+              Update Location
             </PrimaryButton>
           )}
         </SectionCard>
