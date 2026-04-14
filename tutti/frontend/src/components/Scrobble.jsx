@@ -1,25 +1,113 @@
-  import { useState, useEffect } from "react";
+  import { useState, useEffect, useRef } from "react";
   import THEME from "../theme";
   import api from "../services/api";
-  import { ThumbsUpIcon, ThumbsDownIcon } from "./Icons";
+  import { ThumbsUpIcon, ThumbsDownIcon, MusicIcon, ChevronDownIcon } from "./Icons";
 
-  function SpotifyLink({ query, children }) {
-    const [hovered, setHovered] = useState(false);
+  const STREAMING_SERVICES = [
+    {
+      label: "Spotify",
+      color: "#1DB954",
+      getUrl: (artist, title) =>
+        `https://open.spotify.com/search/${encodeURIComponent(`${artist} ${title}`)}`,
+    },
+    {
+      label: "Apple Music",
+      color: "#FC3C44",
+      getUrl: (artist, title) =>
+        `https://music.apple.com/search?term=${encodeURIComponent(`${artist} ${title}`)}`,
+    },
+    {
+      label: "YouTube",
+      color: "#FF0000",
+      getUrl: (artist, title) =>
+        `https://www.youtube.com/results?search_query=${encodeURIComponent(`${artist} ${title}`)}`,
+    },
+  ];
+
+  // streamingLinks prop accepts { spotify, appleMusic, youtube } explicit URLs.
+  // If a key is absent, a search URL is generated. If a key is an empty string, that service is hidden.
+  function StreamingDropdown({ artist, title, streamingLinks = {} }) {
+    const [open, setOpen] = useState(false);
+    const containerRef = useRef(null);
+
+    useEffect(() => {
+      if (!open) return;
+      const handler = (e) => {
+        if (containerRef.current && !containerRef.current.contains(e.target)) {
+          setOpen(false);
+        }
+      };
+      document.addEventListener("mousedown", handler);
+      return () => document.removeEventListener("mousedown", handler);
+    }, [open]);
+
+    const links = STREAMING_SERVICES.map((svc) => {
+      const explicitUrl = streamingLinks[svc.label.toLowerCase().replace(" ", "")];
+      // explicit empty string → hide; explicit URL → use it; absent → generate search URL
+      const url =
+        explicitUrl === ""
+          ? ""
+          : explicitUrl || (artist && title ? svc.getUrl(artist, title) : "");
+      return { ...svc, url };
+    }).filter((l) => l.url);
+
+    if (!links.length) return null;
+
     return (
-      <a
-        href={`https://open.spotify.com/search/${encodeURIComponent(query)}`}
-        target="_blank"
-        rel="noopener noreferrer"
-        onMouseEnter={() => setHovered(true)}
-        onMouseLeave={() => setHovered(false)}
-        style={{
-          color: THEME.textPrimary,
-          textDecoration: hovered ? "underline" : "none",
-          transition: THEME.transition,
-        }}
-      >
-        {children}
-      </a>
+      <div ref={containerRef} style={{ position: "relative", flexShrink: 0 }}>
+        <button
+          onClick={() => setOpen((o) => !o)}
+          style={{
+            display: "flex", alignItems: "center", gap: 4,
+            padding: "5px 10px", borderRadius: THEME.radius.pill,
+            border: `1px solid ${open ? THEME.accent : THEME.border}`,
+            background: open ? THEME.accentMuted : "transparent",
+            color: open ? THEME.accent : THEME.textSecondary,
+            fontFamily: THEME.fontBody, fontSize: 12, fontWeight: 600,
+            cursor: "pointer", transition: THEME.transition,
+          }}
+        >
+          <MusicIcon size={12} />
+          Listen
+          <ChevronDownIcon
+            size={12}
+            style={{ transform: open ? "rotate(180deg)" : "none", transition: THEME.transition }}
+          />
+        </button>
+
+        {open && (
+          <div style={{
+            position: "absolute", right: 0, top: "calc(100% + 6px)",
+            background: THEME.bgCard, border: `1px solid ${THEME.border}`,
+            borderRadius: THEME.radius.md, boxShadow: THEME.shadow.md,
+            overflow: "hidden", zIndex: 200, minWidth: 148,
+          }}>
+            {links.map((link) => (
+              <a
+                key={link.label}
+                href={link.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => setOpen(false)}
+                style={{
+                  display: "flex", alignItems: "center", gap: 10,
+                  padding: "10px 14px",
+                  fontFamily: THEME.fontBody, fontSize: 13, color: THEME.textPrimary,
+                  textDecoration: "none", transition: THEME.transition,
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = THEME.bgElevated; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+              >
+                <span style={{
+                  width: 8, height: 8, borderRadius: "50%",
+                  background: link.color, flexShrink: 0,
+                }} />
+                {link.label}
+              </a>
+            ))}
+          </div>
+        )}
+      </div>
     );
   }
 
@@ -60,11 +148,11 @@
       getScrobbleCover(song_id);
     }, []);
 
-    const handleLike = async () => {
+    const handleRating = async (like) => {
       if (ratingPending) return;
       setRatingPending(true);
       try {
-        const result = await api.likeScrobble(scrobble_id);
+        const result = await api.rateScrobble(scrobble_id, like);
         setRating(result.scrobble.rating);
         onRatingChange?.();
       } catch(err) {
@@ -74,19 +162,8 @@
       }
     };
 
-    const handleDislike = async () => {
-      if (ratingPending) return;
-      setRatingPending(true);
-      try {
-        const result = await api.dislikeScrobble(scrobble_id);
-        setRating(result.scrobble.rating);
-        onRatingChange?.();
-      } catch(err) {
-        // silently revert
-      } finally {
-        setRatingPending(false);
-      }
-    };
+    const handleLike = async () => handleRating(true);
+    const handleDislike = async () => handleRating(false);
 
     const liked = rating === 2;
     const disliked = rating === 0;
@@ -114,22 +191,23 @@
       <div style={{
         padding: "14px 20px", marginBottom: "10px",
         borderRadius: THEME.radius.md, background: THEME.bgCard,
-        display: "flex", flexDirection: "row", alignItems: "center",
+        display: "flex", flexDirection: "row", alignItems: "center", gap: 12,
       }}>
-        <div style={{ width: "56px", height: "56px", background: THEME.bgElevated, marginRight: "16px", flexShrink: 0, borderRadius: THEME.radius.sm, overflow: "hidden" }}>
+        <div style={{ width: "56px", height: "56px", background: THEME.bgElevated, flexShrink: 0, borderRadius: THEME.radius.sm, overflow: "hidden" }}>
           {!coverLoading && (<img src={cover} alt={`${data.album} front cover`} style={{ width: "100%", height: "100%", objectFit: "cover" }} />)}
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <p style={{ margin: "0 0 2px", fontFamily: THEME.fontBody, fontSize: 15, fontWeight: 700, color: THEME.textPrimary, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-            <SpotifyLink query={`${data.artist} ${data.title}`}>
-              {data.artist} — "{data.title}"
-            </SpotifyLink>
+            {data.artist} — "{data.title}"
           </p>
           <p style={{ margin: 0, fontFamily: THEME.fontBody, fontSize: 13, color: THEME.textSecondary, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
             <i>{data.album}</i>
           </p>
         </div>
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, marginLeft: "12px", flexShrink: 0 }}>
+        {!dataLoading && (
+          <StreamingDropdown artist={data.artist} title={data.title} />
+        )}
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, flexShrink: 0 }}>
           <button
             onClick={handleLike}
             style={{ ...thumbButtonBase, width: 34, height: 34, ...(liked ? activeGlow : {}) }}
